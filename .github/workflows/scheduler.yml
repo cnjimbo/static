@@ -1,0 +1,65 @@
+name: Scheduler
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+  push:
+    branches: [ master ]
+
+jobs:
+  update-sponsors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Set node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - run: corepack enable && pnpm i
+
+      - name: Update sponsors
+        run: npm run build
+        env:
+          #; GitHub provider.
+          #; Token requires the `read:user` and `read:org` scopes.
+          SPONSORKIT_GITHUB_TOKEN: ${{ secrets.SPONSORKIT_GITHUB_TOKEN }}
+          SPONSORKIT_GITHUB_LOGIN: ${{ secrets.SPONSORKIT_GITHUB_LOGIN }}
+
+          #; OpenCollective provider.
+          #; Create an API key at https://opencollective.com/applications
+          SPONSORKIT_OPENCOLLECTIVE_KEY: ${{ secrets.SPONSORKIT_OPENCOLLECTIVE_KEY }}
+          #; and provide the ID, slug or GitHub handle of your account.
+          SPONSORKIT_OPENCOLLECTIVE_ID: ${{ secrets.SPONSORKIT_OPENCOLLECTIVE_ID }}
+          #; or
+          SPONSORKIT_OPENCOLLECTIVE_SLUG: ${{ secrets.SPONSORKIT_OPENCOLLECTIVE_SLUG }}
+          #; or
+          SPONSORKIT_OPENCOLLECTIVE_GH_HANDLE: ${{ secrets.SPONSORKIT_OPENCOLLECTIVE_GH_HANDLE }}
+          #; If it is a personal account, set it to `person`. Otherwise not set or set to `collective`
+          SPONSORKIT_OPENCOLLECTIVE_TYPE: ${{ secrets.SPONSORKIT_OPENCOLLECTIVE_TYPE }}
+          
+          #Afdian provider.
+          #Get user_id at https://afdian.net/dashboard/dev
+          SPONSORKIT_AFDIAN_USER_ID: ${{ secrets.SPONSORKIT_AFDIAN_USER_ID }}
+          #Create token at https://afdian.net/dashboard/dev
+          SPONSORKIT_AFDIAN_TOKEN: ${{ secrets.SPONSORKIT_AFDIAN_TOKEN }}
+
+          #; Polar provider.
+          #; Get your token at https://polar.sh/settings
+          SPONSORKIT_POLAR_TOKEN: ${{ secrets.SPONSORKIT_POLAR_TOKEN }}
+          #; The name of the organization to fetch sponsorships from.
+          SPONSORKIT_POLAR_ORGANIZATION: ${{ secrets.SPONSORKIT_POLAR_ORGANIZATION }}
+
+      - name: Commit
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: GitHub Actions
+          author_email: 41898282+github-actions[bot]@users.noreply.github.com
+          message: 'chore: update sponsors.svg [ci skip]'
+          add: "sponsors.*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
